@@ -16,6 +16,16 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+# Normalizar salida de consola/subproceso a UTF-8.
+# Evita UnicodeEncodeError en Windows (cp1252) al imprimir ✓, →, etc.
+for stream in (sys.stdout, sys.stderr):
+    reconfigure = getattr(stream, "reconfigure", None)
+    if callable(reconfigure):
+        try:
+            reconfigure(encoding="utf-8", errors="replace")
+        except (ValueError, OSError):
+            pass
+
 # Permitir importar desde la raíz del proyecto
 sys.path.insert(0, str(Path(__file__).parent.parent))
 

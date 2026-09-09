@@ -182,8 +182,6 @@ def crear_router(plantillas: Jinja2Templates) -> APIRouter:
             cwd=str(DB_PATH.parent.parent),
         )
         ok = resultado.returncode == 0
-        if not ok:
-            return RedirectResponse(url="/demo?restaurado=error", status_code=303)
 
         # La semilla regenera UUIDs, llaves y secretos TOTP. El JWT actual
         # queda vinculado a un usuario que ya no existe; forzamos un login limpio.
