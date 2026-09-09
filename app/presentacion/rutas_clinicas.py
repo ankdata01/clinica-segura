@@ -35,6 +35,20 @@ def _iso_utc() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+_ROLES_VER_EXPEDIENTES = {"doctor", "enfermero", "administrativo"}
+
+
+def _puede_ver_expedientes(usuario: dict) -> bool:
+    return usuario.get("rol") in _ROLES_VER_EXPEDIENTES
+
+
+def _denegar_acceso(con, usuario: dict, recurso: str, ip: str):
+    Fabrica(con).servicio_auth().registrar_acceso_denegado(
+        usuario["sub"], recurso, ip
+    )
+    return RedirectResponse(url="/panel?error=acceso_denegado", status_code=303)
+
+
 def crear_router(plantillas: Jinja2Templates) -> APIRouter:
     router = APIRouter(tags=["clínico"])
 
@@ -47,6 +61,9 @@ def crear_router(plantillas: Jinja2Templates) -> APIRouter:
         con=Depends(dep_conexion),
         usuario: dict = Depends(usuario_actual),
     ):
+        if not _puede_ver_expedientes(usuario):
+            return _denegar_acceso(con, usuario, "/pacientes", _ip(request))
+
         fab = Fabrica(con)
         pacientes = fab.servicio_clinico().listar_pacientes()
         csrf = generar_csrf()
@@ -72,6 +89,11 @@ def crear_router(plantillas: Jinja2Templates) -> APIRouter:
         con=Depends(dep_conexion),
         usuario: dict = Depends(usuario_actual),
     ):
+        if not _puede_ver_expedientes(usuario):
+            return _denegar_acceso(
+                con, usuario, f"/pacientes/{paciente_id}", _ip(request)
+            )
+
         fab = Fabrica(con)
         try:
             paciente, notas = fab.servicio_clinico().obtener_historial(
@@ -119,7 +141,6 @@ def crear_router(plantillas: Jinja2Templates) -> APIRouter:
             )
 
         fab = Fabrica(con)
-        fila_pac = fab.repo_personal()  # solo para obtener paciente
         # Obtener datos del paciente para mostrar en el formulario
         from app.datos.repo_pacientes import RepoPacientes
         pac_dict = RepoPacientes(con).obtener_por_id(paciente_id)
@@ -240,6 +261,11 @@ def crear_router(plantillas: Jinja2Templates) -> APIRouter:
         con=Depends(dep_conexion),
         usuario: dict = Depends(usuario_actual),
     ):
+        if not _puede_ver_expedientes(usuario):
+            return _denegar_acceso(
+                con, usuario, f"/pacientes/{paciente_id}/pdf", _ip(request)
+            )
+
         from app.datos.repo_pacientes import RepoPacientes
         from app.clinico.modelos import Paciente
 

@@ -4,13 +4,11 @@ Servicio de autenticación — orquesta contraseña, TOTP, JWT y auditoría de s
 Recibe los repositorios inyectados (nunca los instancia él mismo).
 No importa nada de presentación (HTTP, cookies, Jinja2).
 """
-import uuid
 from datetime import datetime, timezone
 
 from app.autenticacion import passwords, mfa, tokens
 from app.datos.repo_personal import RepoPersonal
 from app.datos.repo_auditoria import RepoAuditoria
-from app.seguridad.cadena_hash import calcular_hash
 
 
 # ---------------------------------------------------------------------------
@@ -140,25 +138,15 @@ class ServicioAuth:
         ip: str,
         fecha_hora: str,
     ) -> None:
-        hash_anterior = self._audit.obtener_ultimo_hash()
-        entrada_id = str(uuid.uuid4())
-        hash_actual = calcular_hash(
-            hash_anterior, entrada_id, personal_id,
-            entidad_afectada, entidad_id or "",
-            accion, detalle or "", fecha_hora,
+        self._audit.insertar_encadenado(
+            personal_id=personal_id,
+            entidad_afectada=entidad_afectada,
+            entidad_id=entidad_id,
+            accion=accion,
+            detalle=detalle,
+            ip_origen=ip,
+            fecha_hora=fecha_hora,
         )
-        self._audit.insertar({
-            "id":               entrada_id,
-            "personal_id":      personal_id,
-            "entidad_afectada": entidad_afectada,
-            "entidad_id":       entidad_id,
-            "accion":           accion,
-            "detalle":          detalle,
-            "ip_origen":        ip,
-            "fecha_hora":       fecha_hora,
-            "hash_anterior":    hash_anterior,
-            "hash_actual":      hash_actual,
-        })
 
     @staticmethod
     def _iso_utc() -> str:

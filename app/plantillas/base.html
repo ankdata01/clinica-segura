@@ -13,7 +13,9 @@
     <div class="nav-marca">🏥 Clínica Segura</div>
     <nav class="nav-enlaces">
       <a href="/panel">Panel</a>
+      {% if usuario.rol in ("doctor", "enfermero", "administrativo") %}
       <a href="/pacientes">Pacientes</a>
+      {% endif %}
       {% if usuario.rol in ("doctor", "admin", "administrativo") %}
       <a href="/auditoria">Auditoría</a>
       <a href="/sesiones">Sesiones</a>

@@ -15,11 +15,13 @@
 <p class="rol-badge">{{ usuario.rol | capitalize }}</p>
 
 <section class="tarjetas">
+  {% if usuario.rol in ("doctor", "enfermero", "administrativo") %}
   <a href="/pacientes" class="tarjeta">
     <span class="tarjeta-icono">👥</span>
     <strong>Pacientes</strong>
     <small>Ver expedientes</small>
   </a>
+  {% endif %}
 
   {% if usuario.rol in ("doctor", "admin", "administrativo") %}
   <a href="/auditoria" class="tarjeta">

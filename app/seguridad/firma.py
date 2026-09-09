@@ -125,6 +125,9 @@ def firmar_nota(llave_privada: RSAPrivateKey, hash_bytes: bytes) -> str:
 
 
 def verificar_firma(llave_publica: RSAPublicKey, hash_bytes: bytes, firma_b64: str) -> bool:
-    """Verifica una firma almacenada en base64."""
-    firma_bytes = base64.b64decode(firma_b64)
+    """Verifica una firma almacenada en base64. Datos corruptos devuelven False."""
+    try:
+        firma_bytes = base64.b64decode(firma_b64, validate=True)
+    except (ValueError, TypeError):
+        return False
     return _estrategia_activa.verificar(llave_publica, hash_bytes, firma_bytes)

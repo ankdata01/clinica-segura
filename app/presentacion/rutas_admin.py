@@ -10,7 +10,6 @@ POST /admin/usuarios/{id}/toggle → activa/desactiva un usuario
 import base64
 import io
 import uuid
-from datetime import datetime, timezone
 
 import pyotp
 import qrcode
@@ -26,7 +25,6 @@ from app.presentacion.dependencias import (
     dep_conexion, usuario_actual,
     generar_csrf, validar_csrf, set_csrf_cookie,
 )
-from app.seguridad.cadena_hash import calcular_hash
 from app.seguridad.llaves import generar_par_rsa, serializar_publica, guardar_privada_cifrada
 
 ISSUER_TOTP = "Clínica Segura"
@@ -38,20 +36,14 @@ def _ip(request: Request) -> str:
 
 
 def _auditar(repo: RepoAuditoria, personal_id: str | None, accion: str, detalle: str, ip: str) -> None:
-    hash_anterior = repo.obtener_ultimo_hash()
-    eid = str(uuid.uuid4())
-    fecha = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    hash_actual = calcular_hash(
-        hash_anterior, eid, personal_id,
-        "personal", None, accion, detalle, fecha,
+    repo.insertar_encadenado(
+        personal_id=personal_id,
+        entidad_afectada="personal",
+        entidad_id=None,
+        accion=accion,
+        detalle=detalle,
+        ip_origen=ip,
     )
-    repo.insertar({
-        "id": eid, "personal_id": personal_id,
-        "entidad_afectada": "personal", "entidad_id": None,
-        "accion": accion, "detalle": detalle,
-        "ip_origen": ip, "fecha_hora": fecha,
-        "hash_anterior": hash_anterior, "hash_actual": hash_actual,
-    })
 
 
 def _qr_data_uri(uri: str) -> str:
@@ -162,8 +154,8 @@ def crear_router(plantillas) -> APIRouter:
             return _error("Rol no válido.")
 
         # Verificar email único
-        if RepoPersonal(con).obtener_por_email(email) is not None:
-            return _error(f"El correo {email} ya está registrado.")
+        if RepoPersonal(con).obtener_por_email_incluyendo_inactivos(email) is not None:
+            return _error(f"El correo {email} ya está registrado, aunque la cuenta esté inactiva.")
 
         uid = str(uuid.uuid4())
 

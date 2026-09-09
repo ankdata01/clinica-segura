@@ -10,13 +10,11 @@ Los métodos del decorador aceptan personal_id e ip además de los parámetros
 normales del servicio; esos datos extra son solo para la auditoría y nunca
 llegan al servicio interno.
 """
-import uuid
 from datetime import datetime, timezone
 
 from app.clinico.modelos import Paciente, NotaClinica
 from app.clinico.servicio_clinico import ServicioClinico
 from app.datos.repo_auditoria import RepoAuditoria
-from app.seguridad.cadena_hash import calcular_hash
 
 
 class AuditoriaDecorator:
@@ -87,22 +85,12 @@ class AuditoriaDecorator:
         ip: str,
     ) -> None:
         fecha_hora = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-        hash_anterior = self._audit.obtener_ultimo_hash()
-        entrada_id = str(uuid.uuid4())
-        hash_actual = calcular_hash(
-            hash_anterior, entrada_id, personal_id,
-            entidad_afectada, entidad_id or "",
-            accion, detalle or "", fecha_hora,
+        self._audit.insertar_encadenado(
+            personal_id=personal_id,
+            entidad_afectada=entidad_afectada,
+            entidad_id=entidad_id,
+            accion=accion,
+            detalle=detalle,
+            ip_origen=ip,
+            fecha_hora=fecha_hora,
         )
-        self._audit.insertar({
-            "id":               entrada_id,
-            "personal_id":      personal_id,
-            "entidad_afectada": entidad_afectada,
-            "entidad_id":       entidad_id,
-            "accion":           accion,
-            "detalle":          detalle,
-            "ip_origen":        ip,
-            "fecha_hora":       fecha_hora,
-            "hash_anterior":    hash_anterior,
-            "hash_actual":      hash_actual,
-        })

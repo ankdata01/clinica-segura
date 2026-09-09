@@ -12,22 +12,21 @@ Solo disponible cuando DEMO_MODE=True (config.py).
 """
 import subprocess
 import sys
-import uuid
-from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
-from app.config import DB_PATH, DEMO_MODE
+from app.config import (
+    DB_PATH, DEMO_MODE, COOKIE_TOKEN_NOMBRE, COOKIE_PREFACTOR_NOMBRE,
+)
 from app.datos.repo_auditoria import RepoAuditoria
 from app.datos.repo_personal import RepoPersonal
 from app.fabrica import Fabrica
 from app.presentacion.dependencias import (
     dep_conexion, usuario_actual,
-    generar_csrf, validar_csrf, set_csrf_cookie,
+    generar_csrf, validar_csrf, set_csrf_cookie, COOKIE_CSRF,
 )
-from app.seguridad.cadena_hash import calcular_hash
 
 
 def _ip(request: Request) -> str:
@@ -35,25 +34,14 @@ def _ip(request: Request) -> str:
 
 
 def _auditar_ataque(repo: RepoAuditoria, accion: str, detalle: str, ip: str) -> None:
-    hash_anterior = repo.obtener_ultimo_hash()
-    entrada_id    = str(uuid.uuid4())
-    fecha_hora    = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    hash_actual   = calcular_hash(
-        hash_anterior, entrada_id, None,
-        "demo", None, accion, detalle, fecha_hora,
+    repo.insertar_encadenado(
+        personal_id=None,
+        entidad_afectada="demo",
+        entidad_id=None,
+        accion=accion,
+        detalle=detalle,
+        ip_origen=ip,
     )
-    repo.insertar({
-        "id":               entrada_id,
-        "personal_id":      None,
-        "entidad_afectada": "demo",
-        "entidad_id":       None,
-        "accion":           accion,
-        "detalle":          detalle,
-        "ip_origen":        ip,
-        "fecha_hora":       fecha_hora,
-        "hash_anterior":    hash_anterior,
-        "hash_actual":      hash_actual,
-    })
 
 
 def crear_router(plantillas: Jinja2Templates) -> APIRouter:
@@ -180,7 +168,6 @@ def crear_router(plantillas: Jinja2Templates) -> APIRouter:
     @router.post("/restaurar", response_class=HTMLResponse)
     async def restaurar(
         request: Request,
-        con=Depends(dep_conexion),
         usuario: dict = Depends(usuario_actual),
     ):
         form      = await request.form()
@@ -195,9 +182,16 @@ def crear_router(plantillas: Jinja2Templates) -> APIRouter:
             cwd=str(DB_PATH.parent.parent),
         )
         ok = resultado.returncode == 0
-        return RedirectResponse(
-            url=f"/demo?restaurado={'ok' if ok else 'error'}", status_code=303
-        )
+        if not ok:
+            return RedirectResponse(url="/demo?restaurado=error", status_code=303)
+
+        # La semilla regenera UUIDs, llaves y secretos TOTP. El JWT actual
+        # queda vinculado a un usuario que ya no existe; forzamos un login limpio.
+        resp = RedirectResponse(url="/login?restaurado=ok", status_code=303)
+        resp.delete_cookie(COOKIE_TOKEN_NOMBRE)
+        resp.delete_cookie(COOKIE_PREFACTOR_NOMBRE)
+        resp.delete_cookie(COOKIE_CSRF)
+        return resp
 
     # ------------------------------------------------------------------ #
     # GET /demo/codigos — códigos TOTP actuales (sin autenticación)       #

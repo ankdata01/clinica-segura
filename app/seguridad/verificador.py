@@ -46,7 +46,9 @@ def verificar_cadena(repo_auditoria: RepoAuditoria) -> dict:
             entrada["detalle"] or "",
             entrada["fecha_hora"],
         )
-        if esperado != entrada["hash_actual"]:
+        enlace_correcto = entrada["hash_anterior"] == hash_anterior
+        hash_correcto = esperado == entrada["hash_actual"]
+        if not enlace_correcto or not hash_correcto:
             return {
                 "integra":           False,
                 "total":             len(entradas),
@@ -110,9 +112,14 @@ def verificar_firmas(
             })
             continue
 
-        # Caso 2: el contenido está intacto pero la firma no verifica
-        llave_publica = cargar_publica_desde_pem(personal["llave_publica"])
-        if not verificar_firma(llave_publica, h_bytes, fila["firma_digital"]):
+        # Caso 2: el contenido está intacto pero la firma o la llave no verifican
+        try:
+            llave_publica = cargar_publica_desde_pem(personal["llave_publica"])
+            firma_valida = verificar_firma(llave_publica, h_bytes, fila["firma_digital"])
+        except (TypeError, ValueError):
+            firma_valida = False
+
+        if not firma_valida:
             problemas.append({
                 "id":            fila["id"],
                 "motivo":        "firma_invalida",

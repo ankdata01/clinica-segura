@@ -4,11 +4,9 @@ verificación de integridad on-demand, sesiones activas y exportación CSV.
 """
 import csv
 import io
-import uuid
-from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, Request
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 
 from app.config import DEMO_MODE
@@ -40,32 +38,24 @@ def _enriquecer_entradas(entradas: list[dict]) -> list[dict]:
             entrada["detalle"] or "",
             entrada["fecha_hora"],
         )
-        entrada["eslabón_valido"] = (esperado == entrada["hash_actual"])
+        entrada["eslabón_valido"] = (
+            entrada["hash_anterior"] == hash_prev
+            and esperado == entrada["hash_actual"]
+        )
         hash_prev = entrada["hash_actual"]
     # Invertir para mostrar las más recientes primero en la UI
     return list(reversed(entradas))
 
 
 def _auditar_verificacion(repo: RepoAuditoria, personal_id: str, ip: str) -> None:
-    hash_anterior = repo.obtener_ultimo_hash()
-    entrada_id = str(uuid.uuid4())
-    fecha_hora = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    hash_actual = calcular_hash(
-        hash_anterior, entrada_id, personal_id,
-        "sistema", None, "VERIFICAR_INTEGRIDAD", None, fecha_hora,
+    repo.insertar_encadenado(
+        personal_id=personal_id,
+        entidad_afectada="sistema",
+        entidad_id=None,
+        accion="VERIFICAR_INTEGRIDAD",
+        detalle=None,
+        ip_origen=ip,
     )
-    repo.insertar({
-        "id":               entrada_id,
-        "personal_id":      personal_id,
-        "entidad_afectada": "sistema",
-        "entidad_id":       None,
-        "accion":           "VERIFICAR_INTEGRIDAD",
-        "detalle":          None,
-        "ip_origen":        ip,
-        "fecha_hora":       fecha_hora,
-        "hash_anterior":    hash_anterior,
-        "hash_actual":      hash_actual,
-    })
 
 
 def _ip(request: Request) -> str:
@@ -197,6 +187,9 @@ def crear_router(plantillas: Jinja2Templates) -> APIRouter:
         con=Depends(dep_conexion),
         usuario: dict = Depends(usuario_actual),
     ):
+        if usuario.get("rol") not in _ROLES_AUDITORIA:
+            return RedirectResponse(url="/panel?error=acceso_denegado", status_code=303)
+
         fab = Fabrica(con)
         entradas = fab.repo_auditoria().listar_todos()
 

@@ -183,6 +183,10 @@ def crear_router(plantillas: Jinja2Templates) -> APIRouter:
         import jwt as pyjwt
         from app.autenticacion import tokens as tk
 
+        form = await request.form()
+        if not validar_csrf(request, str(form.get("csrf_token", ""))):
+            return RedirectResponse(url="/panel?error=csrf", status_code=303)
+
         user_id = None
         token = request.cookies.get(COOKIE_TOKEN_NOMBRE)
         if token:

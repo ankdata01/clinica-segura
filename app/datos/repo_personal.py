@@ -16,6 +16,14 @@ class RepoPersonal:
         ).fetchone()
         return dict(fila) if fila else None
 
+
+    def obtener_por_email_incluyendo_inactivos(self, email: str) -> dict | None:
+        fila = self._con.execute(
+            "SELECT * FROM personal WHERE email = ?",
+            (email,),
+        ).fetchone()
+        return dict(fila) if fila else None
+
     def obtener_por_id(self, id: str) -> dict | None:
         fila = self._con.execute(
             "SELECT * FROM personal WHERE id = ? AND activo = 1",
