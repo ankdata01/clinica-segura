@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block titulo %}Clínica Segura{% endblock %}</title>
+  <link rel="stylesheet" href="/estaticos/estilo.css?v=5">
+</head>
+<body>
+
+  {% if usuario is defined and usuario %}
+  <header class="barra-nav">
+    <div class="nav-marca">🏥 Clínica Segura</div>
+    <nav class="nav-enlaces">
+      <a href="/panel">Panel</a>
+      <a href="/pacientes">Pacientes</a>
+      {% if usuario.rol in ("doctor", "admin", "administrativo") %}
+      <a href="/auditoria">Auditoría</a>
+      <a href="/sesiones">Sesiones</a>
+      {% endif %}
+      {% if usuario.rol == "admin" %}
+      <a href="/admin">Admin</a>
+      {% endif %}
+      {% if demo_mode %}
+      <a href="/demo" class="enlace-demo">Demo</a>
+      {% endif %}
+      <span class="nav-usuario">{{ usuario.nombre }}</span>
+      <form method="post" action="/logout" style="display:inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button type="submit" class="btn-salir">Salir</button>
+      </form>
+    </nav>
+  </header>
+  {% endif %}
+
+  <main class="contenedor">
+
+    {% block contenido %}{% endblock %}
+
+  </main>
+
+  <footer class="pie">
+    <small>Clínica Segura — Proyecto Ciberseguridad &middot; Solo para uso académico</small>
+  </footer>
+
+</body>
+</html>

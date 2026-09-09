@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block titulo %}Sesiones — Clínica Segura{% endblock %}
+
+{% block contenido %}
+<a href="/panel" class="btn-volver">← Panel</a>
+<h1>Historial de sesiones</h1>
+<p style="font-size:0.85rem;color:var(--color-texto-suave);margin-bottom:1rem">
+  Muestra los últimos eventos de autenticación registrados en la bitácora.
+  Cada evento tiene un eslabón en la cadena de hashes — no puede modificarse.
+</p>
+
+<div class="tabla-audit-wrap">
+<table class="tabla tabla-audit">
+  <thead>
+    <tr>
+      <th>Fecha/hora (UTC)</th>
+      <th>Usuario</th>
+      <th>Evento</th>
+      <th>IP origen</th>
+      <th>Detalle</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for s in sesiones %}
+    <tr>
+      <td style="white-space:nowrap">{{ s.fecha_hora[:19].replace("T"," ") }}</td>
+      <td>
+        {% if s.personal_id and s.personal_id in personal %}
+          {{ personal[s.personal_id] }}
+        {% elif s.personal_id %}
+          <span class="mono">{{ s.personal_id[:8] }}…</span>
+        {% else %}
+          <span style="color:var(--color-texto-suave)">desconocido</span>
+        {% endif %}
+      </td>
+      <td>
+        {% if s.accion == "LOGIN_OK" %}
+          <span class="badge-ok" style="padding:0.1rem 0.5rem;font-size:0.8rem">✓ Login 1F ok</span>
+        {% elif s.accion == "LOGOUT" %}
+          <span class="badge-ok" style="padding:0.1rem 0.5rem;font-size:0.8rem;background:#eaf4fb;color:#1a5276;border-color:#1a5276">→ Logout</span>
+        {% elif s.accion == "LOGIN_FALLIDO" %}
+          <span class="badge-error" style="padding:0.1rem 0.5rem;font-size:0.8rem">✗ Login fallido</span>
+        {% elif s.accion == "MFA_FALLIDO" %}
+          <span class="badge-error" style="padding:0.1rem 0.5rem;font-size:0.8rem">✗ TOTP incorrecto</span>
+        {% elif s.accion == "ACCESO_DENEGADO" %}
+          <span class="badge-error" style="padding:0.1rem 0.5rem;font-size:0.8rem">⛔ Acceso denegado</span>
+        {% else %}
+          {{ s.accion }}
+        {% endif %}
+      </td>
+      <td class="mono" style="font-size:0.82rem">{{ s.ip_origen or "—" }}</td>
+      <td style="font-size:0.85rem;color:var(--color-texto-suave)">{{ s.detalle or "—" }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5" style="text-align:center;color:var(--color-texto-suave)">Sin eventos de sesión registrados.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

@@ -1,0 +1,41 @@
+# Base de datos generada
+/db/clinica.db
+*.db
+*.sqlite
+*.sqlite3
+
+# Material criptográfico generado — NUNCA versionar
+/llaves/*
+!/llaves/.gitkeep
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Variables de entorno
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Entornos virtuales
+venv/
+.venv/
+env/
+
+# IDE / SO
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db

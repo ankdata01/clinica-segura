@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block titulo %}Demo — Clínica Segura{% endblock %}
+
+{% block contenido %}
+<h1>⚠️ Panel de demostración</h1>
+<p class="aviso-demo">
+  Este panel simula ataques a la base de datos para demostrar la capacidad
+  de detección del sistema. <strong>Solo disponible en modo desarrollo.</strong>
+</p>
+
+{% set ataque   = request.query_params.get("ataque") %}
+{% set restaurado = request.query_params.get("restaurado") %}
+{% set trigger  = request.query_params.get("trigger") %}
+
+{% if ataque == "ok" %}
+<div class="alerta alerta-error">
+  ✅ Ataque ejecutado. El diagnóstico de la primera nota fue alterado.
+  Ve a <a href="/auditoria" style="color:inherit;text-decoration:underline">Auditoría</a> y pulsa <strong>Verificar integridad ahora</strong> para detectarlo.
+</div>
+{% endif %}
+{% if restaurado == "ok" %}
+<div class="alerta alerta-exito">✅ Base de datos restaurada al estado original.</div>
+{% elif restaurado == "error" %}
+<div class="alerta alerta-error">❌ Error al restaurar. Revisa los logs.</div>
+{% endif %}
+{% if trigger %}
+<div class="alerta alerta-aviso">🛡️ Trigger respondió: <code>{{ trigger }}</code></div>
+{% endif %}
+
+<section class="demo-seccion">
+  <h2>1. Simular ataque (UPDATE directo en BD)</h2>
+  <p>Modifica el diagnóstico de la primera nota clínica saltándose todas las capas de seguridad.</p>
+  <form method="post" action="/demo/atacar">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <button type="submit" class="btn-peligro">Ejecutar ataque</button>
+  </form>
+</section>
+
+<section class="demo-seccion">
+  <h2>2. Intentar borrar bitácora</h2>
+  <p>Intenta hacer DELETE sobre audit_log para que el trigger lo rechace.</p>
+  <form method="post" action="/demo/borrar_bitacora">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <button type="submit" class="btn-peligro">Intentar DELETE</button>
+  </form>
+</section>
+
+<section class="demo-seccion">
+  <h2>3. Restaurar a estado limpio</h2>
+  <p>Vuelve a correr la semilla y deja la base de datos en su estado original.</p>
+  <form method="post" action="/demo/restaurar">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <button type="submit" class="btn-secundario">Restaurar</button>
+  </form>
+</section>
+
+<section class="demo-seccion">
+  <h2>Códigos TOTP vigentes</h2>
+  <a href="/demo/codigos" class="btn-secundario">Ver códigos</a>
+</section>
+{% endblock %}

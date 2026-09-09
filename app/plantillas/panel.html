@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block titulo %}Panel — Clínica Segura{% endblock %}
+
+{% block contenido %}
+
+{% set error_param = request.query_params.get("error") %}
+{% if error_param == "acceso_denegado" %}
+<div class="alerta alerta-error">
+  ⛔ No tienes permiso para acceder a esa sección.
+  Tu intento quedó registrado en la bitácora de auditoría.
+</div>
+{% endif %}
+
+<h1>Bienvenido, {{ usuario.nombre }}</h1>
+<p class="rol-badge">{{ usuario.rol | capitalize }}</p>
+
+<section class="tarjetas">
+  <a href="/pacientes" class="tarjeta">
+    <span class="tarjeta-icono">👥</span>
+    <strong>Pacientes</strong>
+    <small>Ver expedientes</small>
+  </a>
+
+  {% if usuario.rol in ("doctor", "admin", "administrativo") %}
+  <a href="/auditoria" class="tarjeta">
+    <span class="tarjeta-icono">🔍</span>
+    <strong>Auditoría</strong>
+    <small>Bitácora de eventos</small>
+  </a>
+  {% endif %}
+
+  {% if usuario.rol == "admin" %}
+  <a href="/admin" class="tarjeta">
+    <span class="tarjeta-icono">⚙️</span>
+    <strong>Usuarios</strong>
+    <small>Gestión de personal</small>
+  </a>
+  {% endif %}
+
+  {% if demo_mode %}
+  <a href="/demo" class="tarjeta tarjeta-demo">
+    <span class="tarjeta-icono">⚠️</span>
+    <strong>Demo</strong>
+    <small>Panel de demostración</small>
+  </a>
+  {% endif %}
+</section>
+
+{% if estado_cadena is defined %}
+<section class="estado-cadena">
+  {% if estado_cadena.integra %}
+  <p class="badge-ok">✓ Cadena de auditoría íntegra — {{ estado_cadena.total }} entradas verificadas</p>
+  {% else %}
+  <p class="badge-error">✗ Alteración detectada en la cadena — ejecutar verificación en Auditoría</p>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}

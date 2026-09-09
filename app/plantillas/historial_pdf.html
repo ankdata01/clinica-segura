@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Historial — {{ paciente.nombre }}</title>
+  <style>
+    /* ---- Base ---- */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Georgia", serif;
+      font-size: 11pt;
+      line-height: 1.6;
+      color: #111;
+      background: #fff;
+      padding: 2cm 2.5cm;
+      max-width: 21cm;
+      margin: 0 auto;
+    }
+
+    /* ---- Cabecera del documento ---- */
+    .doc-header {
+      border-bottom: 2px solid #1a5276;
+      padding-bottom: 0.6rem;
+      margin-bottom: 1.2rem;
+    }
+    .doc-header h1 { font-size: 16pt; color: #1a5276; }
+    .doc-header .subtitulo { font-size: 9pt; color: #555; margin-top: 0.2rem; }
+    .doc-meta {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.15rem 0.75rem;
+      margin-top: 0.75rem;
+      font-size: 10pt;
+    }
+    .doc-meta dt { font-weight: bold; color: #333; }
+    .doc-meta dd { color: #111; }
+
+    /* ---- Notas clínicas ---- */
+    h2 {
+      font-size: 12pt;
+      color: #1a5276;
+      border-left: 4px solid #1a5276;
+      padding-left: 0.5rem;
+      margin: 1.5rem 0 0.75rem;
+    }
+
+    .nota {
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 0.8rem 1rem;
+      margin-bottom: 0.9rem;
+      page-break-inside: avoid;
+    }
+    .nota-encabezado {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.25rem;
+      margin-bottom: 0.5rem;
+      font-size: 9.5pt;
+      color: #555;
+      border-bottom: 1px solid #e0e0e0;
+      padding-bottom: 0.35rem;
+    }
+    .nota-encabezado strong { color: #1a5276; }
+
+    dl.campos {
+      display: grid;
+      grid-template-columns: 110px 1fr;
+      gap: 0.2rem 0.75rem;
+      margin-bottom: 0.5rem;
+      font-size: 10pt;
+    }
+    dl.campos dt { font-weight: bold; color: #444; }
+    dl.campos dd { color: #111; }
+
+    .separador { border-top: 1px dashed #ccc; margin: 0.5rem 0; }
+
+    dl.hashes {
+      display: grid;
+      grid-template-columns: 110px 1fr;
+      gap: 0.15rem 0.75rem;
+      font-size: 7.5pt;
+    }
+    dl.hashes dt { font-weight: bold; color: #555; text-transform: uppercase; letter-spacing: 0.04em; }
+    dl.hashes dd {
+      font-family: "Courier New", monospace;
+      color: #333;
+      word-break: break-all;
+    }
+
+    /* ---- Pie ---- */
+    .doc-footer {
+      margin-top: 2rem;
+      padding-top: 0.6rem;
+      border-top: 1px solid #ccc;
+      font-size: 8pt;
+      color: #777;
+      text-align: center;
+    }
+
+    /* ---- Botón imprimir (solo en pantalla) ---- */
+    .btn-imprimir {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      background: #1a5276;
+      color: #fff;
+      border: none;
+      padding: 0.6rem 1.25rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-family: system-ui, sans-serif;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+      z-index: 999;
+    }
+    .btn-imprimir:hover { background: #154360; }
+
+    @media print {
+      .btn-imprimir { display: none; }
+      body { padding: 0; }
+    }
+  </style>
+</head>
+<body>
+
+<button class="btn-imprimir" onclick="window.print()">🖨 Imprimir / Guardar PDF</button>
+
+<div class="doc-header">
+  <h1>Expediente clínico — {{ paciente.nombre }}</h1>
+  <p class="subtitulo">Clínica Segura · Documento generado para archivo o impresión</p>
+  <dl class="doc-meta">
+    <dt>Paciente</dt>
+    <dd>{{ paciente.nombre }}</dd>
+    <dt>Nacimiento</dt>
+    <dd>{{ paciente.fecha_nacimiento }}</dd>
+    {% if paciente.contacto %}
+    <dt>Contacto</dt>
+    <dd>{{ paciente.contacto }}</dd>
+    {% endif %}
+    <dt>Generado por</dt>
+    <dd>{{ usuario.nombre }} ({{ usuario.rol }})</dd>
+    <dt>Fecha de emisión</dt>
+    <dd id="fecha-emision"></dd>
+  </dl>
+</div>
+
+<h2>Notas clínicas ({{ notas | length }})</h2>
+
+{% if notas %}
+  {% for n in notas %}
+  <div class="nota">
+    <div class="nota-encabezado">
+      <span>Fecha: <strong>{{ n.fecha[:10] }}</strong></span>
+      <span>Médico: <strong>{{ n.nombre_personal }}</strong></span>
+      <span>ID nota: <code>{{ n.id[:12] }}…</code></span>
+    </div>
+
+    <dl class="campos">
+      <dt>Diagnóstico</dt>
+      <dd>{{ n.diagnostico }}</dd>
+      <dt>Tratamiento</dt>
+      <dd>{{ n.tratamiento }}</dd>
+    </dl>
+
+    <div class="separador"></div>
+
+    <dl class="hashes">
+      <dt>Hash SHA-256</dt>
+      <dd>{{ n.hash_registro }}</dd>
+      <dt>Firma RSA-PSS</dt>
+      <dd>{{ n.firma_digital[:120] }}…</dd>
+    </dl>
+  </div>
+  {% endfor %}
+{% else %}
+  <p style="color:#777">Sin notas clínicas registradas.</p>
+{% endif %}
+
+<div class="doc-footer">
+  Este documento es generado automáticamente por Clínica Segura.<br>
+  La autenticidad de cada nota puede verificarse mediante su hash SHA-256 y firma RSA-PSS.<br>
+  Solo para uso académico — Proyecto Ciberseguridad.
+</div>
+
+<script>
+  document.getElementById('fecha-emision').textContent = new Date().toLocaleString('es-MX');
+</script>
+</body>
+</html>

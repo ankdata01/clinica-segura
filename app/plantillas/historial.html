@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block titulo %}Historial de {{ paciente.nombre }} — Clínica Segura{% endblock %}
+
+{% block contenido %}
+<div class="encabezado-seccion">
+  <a href="/pacientes" class="btn-volver">← Volver a pacientes</a>
+  <h1>{{ paciente.nombre }}</h1>
+  <p class="subtitulo-paciente">
+    Nacimiento: {{ paciente.fecha_nacimiento }}
+    {% if paciente.contacto %}&nbsp;·&nbsp; {{ paciente.contacto }}{% endif %}
+  </p>
+</div>
+
+<div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:0.5rem">
+  {% if puede_crear_nota %}
+  <a href="/pacientes/{{ paciente.id }}/nota" class="btn-primario">+ Nueva nota</a>
+  {% endif %}
+  <a href="/pacientes/{{ paciente.id }}/pdf" class="btn-secundario" target="_blank">🖨 Exportar PDF</a>
+</div>
+
+<h2>Notas clínicas</h2>
+
+{% if notas %}
+<div class="lista-notas">
+  {% for n in notas %}
+  <details class="nota-card">
+    <summary class="nota-resumen">
+      <span class="nota-fecha">{{ n.fecha[:10] }}</span>
+      <span class="nota-medico">{{ n.nombre_personal }}</span>
+      <span class="nota-diag">{{ n.diagnostico[:70] }}{% if n.diagnostico|length > 70 %}…{% endif %}</span>
+    </summary>
+
+    <div class="nota-detalle">
+      <dl class="nota-dl">
+        <dt>Diagnóstico</dt>
+        <dd>{{ n.diagnostico }}</dd>
+
+        <dt>Tratamiento</dt>
+        <dd>{{ n.tratamiento }}</dd>
+
+        <dt>Médico</dt>
+        <dd>{{ n.nombre_personal }}</dd>
+
+        <dt>Fecha</dt>
+        <dd>{{ n.fecha }}</dd>
+      </dl>
+
+      <div class="nota-separador"></div>
+
+      <dl class="nota-dl nota-dl-mono">
+        <dt>Hash SHA-256</dt>
+        <dd class="mono">{{ n.hash_registro }}</dd>
+
+        <dt>Firma RSA-PSS</dt>
+        <dd><div class="firma-texto mono">{{ n.firma_digital }}</div></dd>
+      </dl>
+    </div>
+  </details>
+  {% endfor %}
+</div>
+{% else %}
+<p>Sin notas clínicas registradas.</p>
+{% endif %}
+{% endblock %}

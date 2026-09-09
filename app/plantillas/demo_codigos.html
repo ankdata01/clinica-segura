@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block titulo %}Códigos TOTP — Demo{% endblock %}
+
+{% block contenido %}
+<h1>Códigos TOTP vigentes</h1>
+<p class="aviso-demo">
+  Válidos por 30 segundos. Recarga la página si ya expiraron.
+</p>
+
+<table class="tabla-datos">
+  <thead>
+    <tr>
+      <th>Nombre</th>
+      <th>Correo</th>
+      <th>Código TOTP</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for u in codigos %}
+    <tr>
+      <td>{{ u.nombre }}</td>
+      <td>{{ u.email }}</td>
+      <td><code class="codigo-totp">{{ u.codigo }}</code></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<p><a href="/demo" class="btn-secundario">← Volver al panel demo</a></p>
+{% endblock %}

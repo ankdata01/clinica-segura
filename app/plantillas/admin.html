@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block titulo %}Administración — Clínica Segura{% endblock %}
+
+{% block contenido %}
+<a href="/panel" class="btn-volver">← Panel</a>
+
+{% set err = request.query_params.get("error") %}
+{% if err == "tiene_auditoria" %}
+<div class="alerta alerta-error">
+  No se puede eliminar: el usuario tiene entradas en la bitácora de auditoría.
+  Por integridad del registro, solo puede quedar suspendido de forma permanente.
+</div>
+{% elif err == "suspender_primero" %}
+<div class="alerta alerta-error">
+  Debes suspender al usuario antes de poder eliminarlo.
+</div>
+{% endif %}
+<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;margin-bottom:1rem">
+  <h1 style="margin:0">Gestión de usuarios</h1>
+  <a href="/admin/nuevo" class="btn-primario">+ Nuevo usuario</a>
+</div>
+
+<div class="tabla-audit-wrap">
+<table class="tabla">
+  <thead>
+    <tr>
+      <th>Nombre</th>
+      <th>Correo</th>
+      <th>Rol</th>
+      <th>Especialidad</th>
+      <th>Estado</th>
+      <th>Acción</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for p in personal %}
+    <tr>
+      <td>{{ p.nombre }}</td>
+      <td class="mono" style="font-size:0.85rem">{{ p.email }}</td>
+      <td>
+        <span class="rol-badge">{{ p.rol }}</span>
+      </td>
+      <td>{{ p.especialidad or "—" }}</td>
+      <td>
+        {% if p.activo %}
+          <span class="badge-ok" style="padding:0.15rem 0.5rem;font-size:0.8rem">Activo</span>
+        {% else %}
+          <span class="badge-error" style="padding:0.15rem 0.5rem;font-size:0.8rem">Inactivo</span>
+        {% endif %}
+      </td>
+      <td style="white-space:nowrap">
+        {% if p.id != usuario.sub %}
+          {# Suspender / Activar #}
+          <form method="post" action="/admin/usuarios/{{ p.id }}/toggle" style="display:inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <button type="submit" class="btn-secundario" style="font-size:0.82rem;padding:0.3rem 0.75rem">
+              {% if p.activo %}Suspender{% else %}Activar{% endif %}
+            </button>
+          </form>
+          {# Eliminar — solo visible si ya está inactivo #}
+          {% if not p.activo %}
+          <form method="post" action="/admin/usuarios/{{ p.id }}/eliminar" style="display:inline"
+                onsubmit="return confirm('¿Eliminar permanentemente a {{ p.nombre }}? Esta acción no se puede deshacer.')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <button type="submit" class="btn-peligro" style="font-size:0.82rem;padding:0.3rem 0.75rem">
+              Eliminar
+            </button>
+          </form>
+          {% endif %}
+        {% else %}
+          <span style="font-size:0.82rem;color:var(--color-texto-suave)">(tu cuenta)</span>
+        {% endif %}
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="6" style="text-align:center">Sin usuarios registrados.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<div class="aviso-demo" style="margin-top:1.5rem;font-size:0.85rem">
+  <strong>Nota de seguridad:</strong> Al desactivar un usuario su sesión actual expira en cuanto vence
+  el JWT (máx. 30 min). No puede volver a iniciar sesión mientras esté inactivo.
+</div>
+{% endblock %}

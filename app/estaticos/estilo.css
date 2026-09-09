@@ -1,0 +1,483 @@
+/* ============================================================
+   Clínica Segura — Hoja de estilos principal
+   Sin frameworks ni CDN: funciona sin internet.
+   Tipografía de sistema, buen contraste, accesible.
+   ============================================================ */
+
+/* ---- Variables ---- */
+:root {
+  --color-fondo:         #f5f5f5;
+  --color-superficie:    #ffffff;
+  --color-borde:         #d0d0d0;
+  --color-texto:         #1a1a1a;
+  --color-texto-suave:   #555555;
+  --color-acento:        #1a5276;
+  --color-acento-hover:  #154360;
+  --color-ok:            #1e8449;
+  --color-ok-fondo:      #d5f5e3;
+  --color-error:         #922b21;
+  --color-error-fondo:   #fadbd8;
+  --color-peligro:       #c0392b;
+  --color-demo-fondo:    #fef9e7;
+  --color-demo-borde:    #f39c12;
+  --fuente-mono:         "Courier New", Courier, monospace;
+  --radio:               4px;
+  --sombra:              0 1px 3px rgba(0,0,0,0.12);
+}
+
+/* ---- Reset mínimo ---- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 1rem;
+  line-height: 1.6;
+  background: var(--color-fondo);
+  color: var(--color-texto);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- Barra de navegación ---- */
+.barra-nav {
+  background: var(--color-acento);
+  color: #fff;
+  padding: 0.75rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.nav-marca { font-size: 1.1rem; font-weight: 700; }
+
+.nav-enlaces {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.nav-enlaces a {
+  color: #dce9f5;
+  text-decoration: none;
+  font-size: 0.9rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radio);
+  transition: background 0.15s;
+}
+.nav-enlaces a:hover        { background: rgba(255,255,255,0.15); color: #fff; }
+.nav-enlaces .enlace-demo   { color: #f9e79f; }
+.nav-usuario                { color: #aed6f1; font-size: 0.85rem; }
+
+/* ---- Botón salir (en nav) ---- */
+.btn-salir {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.4);
+  color: #fff;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radio);
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+.btn-salir:hover { background: rgba(255,255,255,0.15); }
+
+/* ---- Contenedor principal ---- */
+.contenedor {
+  max-width: 1100px;
+  margin: 2rem auto;
+  padding: 0 1.25rem;
+  flex: 1;
+}
+
+/* ---- Títulos ---- */
+h1 { font-size: 1.6rem; margin-bottom: 0.25rem; }
+h2 { font-size: 1.2rem; margin: 1.5rem 0 0.75rem; color: var(--color-acento); }
+
+/* ---- Pie de página ---- */
+.pie {
+  text-align: center;
+  padding: 1rem;
+  color: var(--color-texto-suave);
+  font-size: 0.8rem;
+  border-top: 1px solid var(--color-borde);
+  margin-top: auto;
+}
+
+/* ---- Alertas ---- */
+.alertas { list-style: none; margin-bottom: 1rem; }
+.alerta {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radio);
+  margin-bottom: 0.5rem;
+  border-left: 4px solid;
+}
+.alerta-error   { background: var(--color-error-fondo);  border-color: var(--color-error);  color: var(--color-error); }
+.alerta-ok,
+.alerta-success { background: var(--color-ok-fondo);     border-color: var(--color-ok);     color: var(--color-ok); }
+.alerta-info    { background: #d6eaf8; border-color: var(--color-acento); color: var(--color-acento); }
+.alerta-aviso   { background: #fef9e7; border-color: var(--color-demo-borde); color: #7d6608; }
+.alerta-exito   { background: var(--color-ok-fondo); border-color: var(--color-ok); color: var(--color-ok); }
+
+/* ---- Badges de estado (usados en auditoría) ---- */
+.badge-ok {
+  display: inline-block;
+  background: var(--color-ok-fondo);
+  color: var(--color-ok);
+  border: 1px solid var(--color-ok);
+  border-radius: var(--radio);
+  padding: 0.3rem 0.75rem;
+  font-weight: 600;
+  margin: 0.5rem 0;
+}
+.badge-error {
+  display: inline-block;
+  background: var(--color-error-fondo);
+  color: var(--color-error);
+  border: 1px solid var(--color-error);
+  border-radius: var(--radio);
+  padding: 0.3rem 0.75rem;
+  font-weight: 600;
+  margin: 0.5rem 0;
+}
+
+/* ---- Caja centrada (login, mfa) ---- */
+.caja-centrada {
+  max-width: 400px;
+  margin: 3rem auto;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+  padding: 2rem;
+  box-shadow: var(--sombra);
+}
+.caja-centrada h1 { font-size: 1.4rem; margin-bottom: 0.25rem; }
+.subtitulo { color: var(--color-texto-suave); font-size: 0.9rem; margin-bottom: 1.5rem; }
+
+/* ---- Formularios ---- */
+.formulario { display: flex; flex-direction: column; gap: 1.1rem; }
+.campo { display: flex; flex-direction: column; gap: 0.3rem; }
+
+label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--color-texto);
+}
+
+input[type="email"],
+input[type="password"],
+input[type="text"],
+textarea,
+select {
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+  padding: 0.55rem 0.75rem;
+  font-size: 1rem;
+  font-family: inherit;
+  background: var(--color-superficie);
+  color: var(--color-texto);
+  transition: border-color 0.15s;
+  width: 100%;
+}
+input:focus,
+textarea:focus { outline: 2px solid var(--color-acento); border-color: var(--color-acento); }
+
+small { color: var(--color-texto-suave); font-size: 0.8rem; }
+
+/* ---- Botones ---- */
+.btn-primario,
+.btn-secundario,
+.btn-peligro {
+  display: inline-block;
+  padding: 0.6rem 1.25rem;
+  border-radius: var(--radio);
+  border: none;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-family: inherit;
+  font-weight: 600;
+  text-decoration: none;
+  text-align: center;
+  transition: background 0.15s;
+}
+
+.btn-primario   { background: var(--color-acento);   color: #fff; }
+.btn-primario:hover   { background: var(--color-acento-hover); }
+
+.btn-secundario { background: #e8e8e8; color: var(--color-texto); }
+.btn-secundario:hover { background: #d8d8d8; }
+
+.btn-peligro    { background: var(--color-peligro); color: #fff; }
+.btn-peligro:hover    { background: #a93226; }
+
+/* ---- Tabla genérica ---- */
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  background: var(--color-superficie);
+  font-size: 0.9rem;
+}
+
+.tabla th,
+.tabla td {
+  padding: 0.6rem 0.85rem;
+  text-align: left;
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.tabla th {
+  background: #eaeff5;
+  font-weight: 700;
+  color: var(--color-acento);
+  white-space: nowrap;
+}
+
+.tabla tr:hover td { background: #f7f9fc; }
+
+/* ---- Tabla de auditoría ---- */
+/*
+   La pantalla clave de la presentación. Legible desde el fondo del salón:
+   fuente monoespaciada en hashes, badges de color + símbolo para estado.
+*/
+.tabla-audit-wrap { overflow-x: auto; margin-top: 1rem; }
+
+.tabla-audit { font-size: 0.85rem; }
+.tabla-audit .mono {
+  font-family: var(--fuente-mono);
+  font-size: 0.82rem;
+  letter-spacing: 0.03em;
+  color: #444;
+}
+
+.tabla-audit .badge-ok,
+.tabla-audit .badge-error {
+  padding: 0.15rem 0.5rem;
+  font-size: 0.8rem;
+  margin: 0;
+}
+
+.mono { font-family: var(--fuente-mono); }
+
+/* ---- Panel (tarjetas de acceso rápido) ---- */
+.tarjetas {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin: 1.5rem 0;
+}
+
+.tarjeta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+  padding: 1.5rem 2rem;
+  text-decoration: none;
+  color: var(--color-texto);
+  box-shadow: var(--sombra);
+  transition: box-shadow 0.15s, border-color 0.15s;
+  min-width: 150px;
+}
+.tarjeta:hover { box-shadow: 0 3px 8px rgba(0,0,0,0.18); border-color: var(--color-acento); }
+.tarjeta-icono { font-size: 2rem; }
+.tarjeta-demo  { border-color: var(--color-demo-borde); background: var(--color-demo-fondo); }
+
+/* ---- Badge de rol ---- */
+.rol-badge {
+  display: inline-block;
+  background: #d6eaf8;
+  color: var(--color-acento);
+  border-radius: var(--radio);
+  padding: 0.2rem 0.6rem;
+  font-size: 0.85rem;
+  margin-bottom: 1.25rem;
+}
+
+/* ---- Estado de la cadena (panel) ---- */
+.estado-cadena { margin-top: 1.5rem; }
+
+/* ---- Secciones de demo ---- */
+.aviso-demo {
+  background: var(--color-demo-fondo);
+  border: 1px solid var(--color-demo-borde);
+  border-radius: var(--radio);
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.demo-seccion {
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+.demo-seccion h2 { margin-top: 0; }
+
+/* ---- Resultado de verificación ---- */
+.resultado-verificacion {
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+  padding: 1.25rem;
+  margin: 1rem 0;
+}
+
+/* ---- Separador horizontal ---- */
+hr { border: none; border-top: 1px solid var(--color-borde); margin: 1.25rem 0; }
+
+/* ---- Encabezado de sección (historial) ---- */
+.encabezado-seccion {
+  border-left: 4px solid var(--color-acento);
+  padding-left: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+/* ---- Botón volver ---- */
+.btn-volver {
+  display: inline-block;
+  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--color-acento);
+  text-decoration: none;
+  opacity: 0.8;
+}
+.btn-volver:hover { opacity: 1; text-decoration: underline; }
+
+/* ---- Subtítulo de paciente ---- */
+.subtitulo-paciente { color: var(--color-texto-suave); font-size: 0.9rem; margin-top: 0.15rem; }
+
+/* ---- Tarjetas desplegables de notas clínicas ---- */
+.lista-notas { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 1rem; }
+
+.nota-card {
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra);
+  overflow: hidden;
+}
+
+.nota-resumen {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  flex-wrap: wrap;
+}
+.nota-resumen::-webkit-details-marker { display: none; }
+.nota-resumen::before {
+  content: "▶";
+  font-size: 0.7rem;
+  color: var(--color-acento);
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+details[open] > .nota-resumen::before { transform: rotate(90deg); }
+
+.nota-resumen:hover { background: #f7f9fc; }
+
+.nota-fecha  { font-family: var(--fuente-mono); font-size: 0.82rem; color: var(--color-texto-suave); flex-shrink: 0; }
+.nota-medico { font-weight: 600; font-size: 0.9rem; flex-shrink: 0; color: var(--color-acento); }
+.nota-diag   { font-size: 0.9rem; color: var(--color-texto); flex: 1; }
+
+.nota-detalle {
+  border-top: 1px solid var(--color-borde);
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+/* ---- Definition list para detalles de nota ---- */
+.nota-dl {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: 0.35rem 0.75rem;
+  align-items: baseline;
+}
+
+.nota-dl dt {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-texto-suave);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding-top: 0.15rem;
+}
+
+.nota-dl dd {
+  font-size: 0.92rem;
+  color: var(--color-texto);
+  margin: 0;
+}
+
+.nota-dl-mono dt { color: var(--color-acento); }
+
+.nota-dl-mono dd {
+  font-family: var(--fuente-mono);
+  font-size: 0.77rem;
+  word-break: break-all;
+  color: #444;
+}
+
+.nota-separador {
+  border-top: 1px solid var(--color-borde);
+  margin: 0.6rem 0;
+}
+
+.firma-texto {
+  max-height: 3rem;
+  overflow-y: auto;
+  display: block;
+  background: #f4f6f8;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+  padding: 0.3rem 0.5rem;
+  line-height: 1.4;
+}
+
+/* ---- Filas expandibles en la bitácora de auditoría ---- */
+.audit-fila-resumen:hover td { background: #eef3fa; }
+
+.audit-fila-detalle td { padding: 0; }
+
+.audit-detalle-cuerpo {
+  background: #f7f9fc;
+  border-top: 2px solid var(--color-acento);
+  padding: 1rem 1.25rem;
+}
+
+.audit-dl {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 0.35rem 0.75rem;
+  align-items: baseline;
+}
+
+.audit-dl dt {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-texto-suave);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.audit-dl dd {
+  font-size: 0.88rem;
+  color: var(--color-texto);
+  margin: 0;
+}
+
+.audit-dl dd.mono { font-family: var(--fuente-mono); font-size: 0.8rem; color: #444; }
+
+.hash-largo { word-break: break-all; }

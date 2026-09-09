@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block titulo %}Nuevo usuario — Clínica Segura{% endblock %}
+
+{% block contenido %}
+<a href="/admin" class="btn-volver">← Gestión de usuarios</a>
+<h1>Registrar nuevo usuario</h1>
+<p class="subtitulo">
+  El sistema generará automáticamente las llaves RSA y el secreto TOTP.
+  Al terminar se mostrará el código QR para configurar la app autenticadora.
+</p>
+
+{% if error %}
+<div class="alerta alerta-error">{{ error }}</div>
+{% endif %}
+
+<div class="caja-centrada" style="max-width:520px;margin-top:1.5rem">
+  <form method="post" action="/admin/nuevo" class="formulario">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+    <div class="campo">
+      <label for="nombre">Nombre completo</label>
+      <input type="text" id="nombre" name="nombre" required placeholder="Dra. Ana Pérez López">
+    </div>
+
+    <div class="campo">
+      <label for="email">Correo electrónico</label>
+      <input type="email" id="email" name="email" required placeholder="ana.perez@clinica.mx">
+    </div>
+
+    <div class="campo">
+      <label for="rol">Rol</label>
+      <select id="rol" name="rol">
+        <option value="doctor">Doctor / Médico</option>
+        <option value="enfermero">Enfermero/a</option>
+        <option value="administrativo">Administrativo</option>
+        <option value="admin">Administrador del sistema</option>
+      </select>
+    </div>
+
+    <div class="campo">
+      <label for="especialidad">Especialidad (opcional)</label>
+      <input type="text" id="especialidad" name="especialidad" placeholder="Cardiología, Pediatría…">
+    </div>
+
+    <div class="campo">
+      <label for="password">Contraseña inicial</label>
+      <input type="text" id="password" name="password" required
+             placeholder="El usuario la cambiará en su primer acceso"
+             autocomplete="off">
+      <small>Esta contraseña también cifra la llave RSA privada del usuario. Entrégala en persona.</small>
+    </div>
+
+    <button type="submit" class="btn-primario">Crear usuario y generar QR →</button>
+  </form>
+</div>
+{% endblock %}

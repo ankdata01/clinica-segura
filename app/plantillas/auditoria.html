@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block titulo %}Auditoría — Clínica Segura{% endblock %}
+
+{% block contenido %}
+<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;margin-bottom:1rem">
+  <h1 style="margin:0">Bitácora de auditoría</h1>
+  <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+    <a href="/sesiones" class="btn-secundario">👤 Sesiones</a>
+    <a href="/auditoria/exportar.csv" class="btn-secundario">⬇ Exportar CSV</a>
+    <form method="post" action="/auditoria/verificar" style="display:inline">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit" class="btn-primario">🔍 Verificar integridad</button>
+    </form>
+  </div>
+</div>
+
+{% if resultado_verificacion is defined %}
+<section class="resultado-verificacion">
+  <h2>Resultado de la verificación</h2>
+
+  {# resultado_verificacion.cadena = {integra, total, primera_fila_rota} #}
+  {% if resultado_verificacion.cadena.integra %}
+  <p class="badge-ok">✓ Cadena de {{ resultado_verificacion.cadena.total }} eslabones íntegra</p>
+  {% else %}
+  <p class="badge-error">✗ Cadena rota — primer eslabón afectado: <code>{{ resultado_verificacion.cadena.primera_fila_rota[:12] }}…</code></p>
+  {% endif %}
+
+  {% if resultado_verificacion.firmas_invalidas %}
+  <p class="badge-error" style="margin-top:0.5rem">
+    ✗ {{ resultado_verificacion.firmas_invalidas | length }} nota(s) con integridad comprometida
+  </p>
+
+  {% for p in resultado_verificacion.firmas_invalidas %}
+  <div class="audit-detalle-cuerpo" style="margin-top:0.75rem;border-color:var(--color-error)">
+    <dl class="audit-dl">
+      <dt>ID nota</dt>
+      <dd class="mono">{{ p.id }}</dd>
+
+      <dt>Problema</dt>
+      <dd>
+        {% if p.motivo == "contenido_alterado" %}
+          <strong style="color:var(--color-error)">Contenido alterado</strong> — el diagnóstico o tratamiento fue modificado directamente en la BD
+        {% elif p.motivo == "firma_invalida" %}
+          <strong style="color:var(--color-error)">Firma RSA-PSS inválida</strong> — el contenido coincide con el hash pero la firma no verifica
+        {% else %}
+          {{ p.motivo }}
+        {% endif %}
+      </dd>
+
+      {% if p.nota_actual %}
+      <dt>Diagnóstico actual</dt>
+      <dd style="color:var(--color-error);font-weight:600">{{ p.nota_actual.diagnostico }}</dd>
+
+      <dt>Tratamiento actual</dt>
+      <dd>{{ p.nota_actual.tratamiento }}</dd>
+
+      <dt>Fecha nota</dt>
+      <dd>{{ p.nota_actual.fecha }}</dd>
+      {% endif %}
+
+      {% if p.hash_guardado %}
+      <dt>Hash guardado</dt>
+      <dd class="mono hash-largo">{{ p.hash_guardado }}</dd>
+      {% endif %}
+
+      {% if p.hash_esperado %}
+      <dt>Hash recalculado</dt>
+      <dd class="mono hash-largo" style="color:var(--color-ok)">{{ p.hash_esperado }}</dd>
+      {% endif %}
+    </dl>
+  </div>
+  {% endfor %}
+
+  {% else %}
+  <p class="badge-ok" style="margin-top:0.5rem">✓ Todas las firmas digitales son válidas</p>
+  {% endif %}
+</section>
+{% endif %}
+
+<h2>Entradas recientes</h2>
+<p style="font-size:0.85rem;color:var(--color-texto-suave);margin-bottom:0.5rem">
+  Clic en cualquier fila para ver hashes completos, IP y detalle.
+</p>
+
+<div class="tabla-audit-wrap">
+<table class="tabla tabla-audit">
+  <thead>
+    <tr>
+      <th>Fecha/hora</th>
+      <th>Usuario</th>
+      <th>Acción</th>
+      <th>Entidad</th>
+      <th class="mono">Hash anterior</th>
+      <th class="mono">Hash actual</th>
+      <th>Estado</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for e in entradas %}
+    <tr class="audit-fila-resumen" onclick="toggleDetalle('{{ loop.index }}')" style="cursor:pointer">
+      <td style="white-space:nowrap">{{ e.fecha_hora[:19].replace("T", " ") }}</td>
+      <td>{{ e.personal_id[:8] ~ "…" if e.personal_id else "sistema" }}</td>
+      <td>{{ e.accion }}</td>
+      <td>{{ e.entidad_afectada }}{% if e.entidad_id %} ({{ e.entidad_id[:8] }}…){% endif %}</td>
+      <td class="mono">{{ e.hash_anterior[:12] if e.hash_anterior else "—" }}…</td>
+      <td class="mono">{{ e.hash_actual[:12] }}…</td>
+      <td>
+        {% if e.eslabón_valido %}
+        <span class="badge-ok" title="Eslabón válido">✓ OK</span>
+        {% else %}
+        <span class="badge-error" title="Eslabón roto">✗ ROTO</span>
+        {% endif %}
+      </td>
+    </tr>
+    <tr class="audit-fila-detalle" id="detalle-{{ loop.index }}" hidden>
+      <td colspan="7">
+        <div class="audit-detalle-cuerpo">
+          <dl class="audit-dl">
+            <dt>ID entrada</dt>
+            <dd class="mono">{{ e.id }}</dd>
+
+            <dt>Personal ID</dt>
+            <dd class="mono">{{ e.personal_id or "—" }}</dd>
+
+            <dt>IP origen</dt>
+            <dd>{{ e.ip_origen or "—" }}</dd>
+
+            <dt>Fecha/hora (UTC)</dt>
+            <dd>{{ e.fecha_hora }}</dd>
+
+            <dt>Detalle</dt>
+            <dd>{{ e.detalle or "—" }}</dd>
+
+            <dt>Hash anterior</dt>
+            <dd class="mono hash-largo">{{ e.hash_anterior or "génesis (vacío)" }}</dd>
+
+            <dt>Hash actual</dt>
+            <dd class="mono hash-largo">{{ e.hash_actual }}</dd>
+          </dl>
+        </div>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<script>
+function toggleDetalle(idx) {
+  var row = document.getElementById('detalle-' + idx);
+  row.hidden = !row.hidden;
+}
+</script>
+{% endblock %}
