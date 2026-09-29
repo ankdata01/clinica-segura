@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased — 2026-09-28
+
+### Documentación y modelado de seguridad
+- Revisión de STRIDE conforme al enfoque de modelado de amenazas de Microsoft.
+- Mapeo MITRE ATT&CK corregido con nombres/IDs oficiales e incorporación de `T1539 — Steal Web Session Cookie`.
+- Añadido **CIA+** como evaluación explícita de confidencialidad, integridad, disponibilidad, autenticidad, accountability/trazabilidad y no repudio; se documenta que CIA+ es una extensión de ingeniería del proyecto, no un estándar NIST independiente.
+- Corregido **ITU-T X.800**: se conservan cinco familias básicas de servicios; detección de eventos, *security audit trail* y *security recovery* se clasifican como mecanismos/capacidades y no como servicios adicionales.
+- Ampliado **Defense in Depth** conforme al enfoque NIST de personas, tecnología y operaciones.
+- Añadidos `docs/marcos-seguridad.md` y fuentes oficiales.
+- Actualizado `docs/modelo-amenazas.md`, `docs/seguridad.md`, `docs/matriz-cumplimiento.md` e informe técnico.
+- Esta revisión es documental: **no cambia el comportamiento de runtime ni la versión funcional v1.1.0**.
+
 ## 1.1.0 — 2026-09-13
 
 ### Seguridad
