@@ -35,7 +35,19 @@ flowchart TD
     K --> S
 ```
 
-Patrones principales: **Repository, Factory, Decorator y Strategy**. El modelo de amenazas se documenta en [`docs/modelo-amenazas.md`](docs/modelo-amenazas.md).
+Patrones principales: **Repository, Factory, Decorator y Strategy**.
+
+## Marcos de seguridad
+
+La revisión documental de 2026-09-28 usa cinco perspectivas complementarias:
+
+- **STRIDE (Microsoft):** clasifica amenazas en Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service y Elevation of Privilege.
+- **MITRE ATT&CK Enterprise:** relaciona escenarios plausibles con técnicas adversarias documentadas; no se usa como checklist de cumplimiento.
+- **CIA+:** extensión de ingeniería de la tríada CIA. En este proyecto, `+` = autenticidad + accountability/trazabilidad + no repudio. **No se presenta como un estándar NIST independiente.**
+- **ITU-T X.800:** separa cinco familias básicas de servicios de seguridad de sus mecanismos. Auditoría/detección y recuperación se tratan como mecanismos/capacidades, no como familias adicionales de servicio.
+- **Defense in Depth (NIST):** revisa barreras complementarias en personas, tecnología y operaciones.
+
+Véanse [`docs/modelo-amenazas.md`](docs/modelo-amenazas.md) y [`docs/marcos-seguridad.md`](docs/marcos-seguridad.md).
 
 ## Estructura del repositorio
 
@@ -130,9 +142,10 @@ Consulte [`TESTING.md`](TESTING.md) y [`evidencias/README.md`](evidencias/README
 ## Documentación técnica
 
 - [`docs/informe-tecnico-extendido.md`](docs/informe-tecnico-extendido.md) — documentación técnica complementaria del proyecto.
-- [`docs/modelo-amenazas.md`](docs/modelo-amenazas.md) — STRIDE, MITRE ATT&CK, X.800 y Defense in Depth.
+- [`docs/modelo-amenazas.md`](docs/modelo-amenazas.md) — STRIDE, MITRE ATT&CK, CIA+, X.800 y Defense in Depth.
+- [`docs/marcos-seguridad.md`](docs/marcos-seguridad.md) — fuentes oficiales y criterio de aplicación.
 - [`docs/arquitectura.md`](docs/arquitectura.md) — capas, patrones y fronteras de confianza.
-- [`docs/seguridad.md`](docs/seguridad.md) — catálogo de controles.
+- [`docs/seguridad.md`](docs/seguridad.md) — catálogo de controles y objetivos CIA+.
 - [`docs/revision-seguridad.md`](docs/revision-seguridad.md) — correcciones v1.1.0.
 - [`docs/demo.md`](docs/demo.md) — guion de demostración.
 - [`docs/anexos-codigo.md`](docs/anexos-codigo.md) — índice de anexos/código y evidencias.

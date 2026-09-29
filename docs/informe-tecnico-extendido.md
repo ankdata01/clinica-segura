@@ -4,13 +4,11 @@
 **Diseño e implementación de controles de ciberseguridad para un expediente clínico electrónico**
 
 Proyecto académico de ciberseguridad  
-Asignatura: **[Nombre de la asignatura]**  
-Institución: **[Nombre de la institución]**  
-Autor(es): **[Nombre(s) del estudiante/equipo]**  
-Docente: **[Nombre del docente]**  
-Fecha: **13 de septiembre de 2026**
+Unidad de aprendizaje: **Seguridad Cibernética**  
+Institución: **Universidad Autónoma del Estado de México — Facultad de Ingeniería**  
+Fecha de revisión documental: **28 de septiembre de 2026**
 
-**Versión evaluada:** 1.1.0  
+**Versión funcional evaluada:** 1.1.0  
 **Tecnologías principales:** Python 3.12, FastAPI, Jinja2, SQLite, Argon2id, TOTP, JWT RS256, RSA-PSS, SHA-256 y AES-256-GCM.
 
 > **Nota de alcance.** Sistema Seguro: Hospital es un prototipo académico. Demuestra controles técnicos y un proceso de ingeniería de seguridad, pero no constituye por sí mismo una plataforma clínica certificada ni acredita cumplimiento legal o normativo para expedientes reales.
@@ -19,19 +17,17 @@ Fecha: **13 de septiembre de 2026**
 
 Sistema Seguro: Hospital v1.1.0 es un prototipo de expediente clínico electrónico diseñado para demostrar de forma verificable autenticidad, integridad, control de acceso, no repudio y trazabilidad. Utiliza autenticación multifactor con Argon2id y TOTP, sesiones JWT RS256, autorización basada en roles, firma RSA-PSS de notas clínicas, hashes SHA-256 y una bitácora encadenada protegida contra modificaciones y eliminaciones por la propia aplicación.
 
-La revisión de esta versión modificó el código para eliminar secretos embebidos, cifrar secretos TOTP en reposo con AES-256-GCM, cifrar la llave privada del servidor, endurecer JWT, revalidar cuentas en cada petición protegida, incluir IP en la cadena de auditoría, fortalecer cookies y cabeceras HTTP, restringir funciones peligrosas de demostración y conservar la verificabilidad de firmas históricas de médicos desactivados.
+La revisión de seguridad de v1.1.0 eliminó secretos embebidos, cifró secretos TOTP en reposo con AES-256-GCM, cifró la llave privada del servidor, endureció JWT, revalidó cuentas en cada petición protegida, incorporó IP a la cadena de auditoría, fortaleció cookies/cabeceras HTTP, restringió funciones de demostración y conservó la verificabilidad de firmas históricas de médicos desactivados.
 
-El análisis usa STRIDE, MITRE ATT&CK, X.800 y Defense in Depth. La validación automatizada consta de doce pruebas de integración y seguridad, compilación estática y revisión de secretos versionables. Las limitaciones productivas —SQLite, rate limiting en memoria, ausencia de HSM/KMS, cifrado integral de BD y log remoto inmutable— se declaran explícitamente.
+La revisión documental de 2026-09-28 estructura el análisis con **STRIDE, MITRE ATT&CK, CIA+, ITU-T X.800 y Defense in Depth**, conforme a fuentes oficiales. Corrige además la clasificación X.800 de auditoría/detección/recuperación como mecanismos o capacidades y no como familias adicionales de servicios de seguridad.
 
 # Introducción
 
 Los sistemas clínicos requieren proteger identidad, autorización, integridad, autoría, confidencialidad, disponibilidad y auditoría. Un control aislado no cubre todos estos objetivos: una contraseña fuerte no evita la manipulación directa de una base de datos, una firma digital no controla quién puede leer un expediente y una bitácora local no equivale a un registro remoto inmutable.
 
-Sistema Seguro: Hospital construye un demostrador pequeño pero técnicamente defendible. La versión 1.1.0 adopta un enfoque **secure by default**: no arranca sin un secreto maestro suficientemente largo, las funciones de demo están deshabilitadas por defecto, las cookies se preparan para transporte seguro y el material criptográfico generado queda excluido del repositorio.
+La pregunta de ingeniería es: **¿cómo demostrar que una nota clínica fue creada por un médico autorizado, que su contenido no fue alterado sin detección y que los eventos relevantes dejan evidencia auditable?**
 
-La metodología combina **STRIDE**, **MITRE ATT&CK**, **ITU-T X.800** y **Defense in Depth**, apoyada por RFC 6238 para TOTP, RFC 7519 para JWT, RFC 8017 para RSA-PSS, NIST SP 800-63B-4 y OWASP ASVS 5.0.0.
-
-La pregunta de ingeniería es: **¿cómo demostrar que una nota clínica fue creada por un médico autorizado, que su contenido no fue alterado sin detección y que los eventos relevantes dejan evidencia auditable?** La respuesta se implementa mediante controles de identidad, criptografía, aplicación, persistencia y validación automatizada.
+La respuesta se implementa mediante autenticación multifactor, autorización por roles, firmas RSA-PSS, hashes SHA-256, auditoría encadenada y pruebas automatizadas. El análisis se apoya en STRIDE, MITRE ATT&CK, CIA+, X.800 y Defense in Depth, complementados con RFC 6238, RFC 7519, RFC 8017, NIST SP 800-63B-4 y OWASP ASVS.
 
 # Descripción del sistema
 
@@ -117,50 +113,78 @@ La separación es modular dentro de un mismo proceso FastAPI y no debe confundir
 
 # Modelo STRIDE
 
-| Categoría | Amenaza | Controles | Riesgo residual |
-|---|---|---|---|
-| Spoofing | contraseña/cuenta válida robada | Argon2id, TOTP, rate limiting, JWT, revalidación | TOTP puede sufrir phishing en tiempo real |
-| Tampering | modificación directa de nota/bitácora | SHA-256, RSA-PSS, hash chain con IP, triggers, verificador | control total del host puede superar controles locales |
-| Repudiation | negar autoría/acción | RSA-PSS + auditoría encadenada | sin TSA externa/HSM |
-| Information Disclosure | robo de TOTP, PEM, JWT o BD | AES-GCM, PEM cifrado, RBAC, cookies y no-store | BD clínica no cifrada integralmente |
-| Denial of Service | fuerza bruta/bloqueo SQLite | rate limiting, transacciones breves | no distribuido/HA |
-| Elevation of Privilege | uso indebido de rol/sesión | RBAC, denegaciones auditadas, revalidación de cuenta | políticas en código |
+STRIDE se aplica conforme al enfoque de modelado de amenazas de Microsoft: se identifican activos, componentes, flujos y fronteras, y se revisan seis categorías. El objetivo es descubrir escenarios de abuso y relacionarlos con controles verificables, no declarar riesgo cero.
+
+| Categoría | Propiedad asociada | Amenaza | Controles | Riesgo residual |
+|---|---|---|---|---|
+| Spoofing | Autenticación | contraseña/cuenta válida robada | Argon2id, TOTP, rate limiting, JWT, revalidación | phishing TOTP y robo de sesión |
+| Tampering | Integridad | modificación directa de nota/bitácora | SHA-256, RSA-PSS, hash chain con IP, triggers, verificador | control total del host |
+| Repudiation | No repudio/accountability | negar autoría/acción | RSA-PSS + auditoría encadenada | sin TSA/HSM/tercero confiable |
+| Information Disclosure | Confidencialidad | robo de TOTP, PEM, JWT o BD | AES-GCM, PEM cifrado, RBAC, cookies y no-store | BD clínica no cifrada integralmente |
+| Denial of Service | Disponibilidad | fuerza bruta/bloqueo SQLite | rate limiting, transacciones breves | no distribuido/HA |
+| Elevation of Privilege | Autorización | uso indebido de rol/sesión | RBAC, denegaciones auditadas, revalidación | políticas locales a la app |
+
+Correspondencia usada: Spoofing→autenticación, Tampering→integridad, Repudiation→no repudio/accountability, Information Disclosure→confidencialidad, Denial of Service→disponibilidad y Elevation of Privilege→autorización.
 
 # MITRE ATT&CK
 
-| Técnica | Aplicación al prototipo | Mitigación |
-|---|---|---|
-| T1078 Valid Accounts | abuso de credenciales legítimas | MFA, RBAC, revalidación y auditoría |
-| T1110 Brute Force | guessing/spraying | Argon2id + rate limiting |
-| T1552.004 Private Keys | robo de PEM | exclusión Git, cifrado, archivos no estáticos |
-| T1565.001 Stored Data Manipulation | manipulación de expedientes | SHA-256, RSA-PSS, verificador |
-| T1070 Indicator Removal | borrar evidencia | triggers + hash chain; se recomienda SIEM remoto |
-| T1190 Public-Facing Application | explotar entrada web | SQL parametrizado, autoescape, CSRF, CSP |
-| T1005 Data from Local System | extraer BD/llaves | separación/cifrado de secretos; residual con host comprometido |
+ATT&CK se emplea como base de conocimiento de comportamientos adversarios. El mapeo describe escenarios plausibles y controles del prototipo; no representa certificación, prueba de ocurrencia ni checklist de cumplimiento.
 
-# X.800
+| Técnica | Aplicación al prototipo | Mitigación/cobertura |
+|---|---|---|
+| T1078 — Valid Accounts | abuso de credenciales legítimas | MFA, RBAC, revalidación y auditoría |
+| T1110 — Brute Force | guessing/spraying/intentos repetidos | Argon2id + rate limiting |
+| T1539 — Steal Web Session Cookie | robo/reutilización de cookie JWT | HttpOnly, Secure configurable, SameSite=Strict, expiración y revalidación |
+| T1552.004 — Unsecured Credentials: Private Keys | búsqueda/exfiltración de PEM | exclusión Git, cifrado, archivos no estáticos |
+| T1565.001 — Stored Data Manipulation | manipulación de expedientes/evidencia | SHA-256, RSA-PSS, hash chain y verificador |
+| T1070 — Indicator Removal | borrar/modificar evidencia | triggers + hash chain; producción requiere SIEM remoto |
+| T1190 — Exploit Public-Facing Application | explotar entrada web si se expone a red | SQL parametrizado, autoescape, CSRF, CSP |
+| T1005 — Data from Local System | extraer BD/llaves | separación/cifrado de secretos; residual alto con host comprometido |
+
+# CIA+
+
+NIST sitúa confidencialidad, integridad y disponibilidad en el núcleo de la seguridad y reconoce que otras propiedades pueden ser relevantes. En este documento, **CIA+ es una extensión de ingeniería del proyecto, no un estándar NIST independiente**. El signo `+` representa autenticidad, accountability/trazabilidad y no repudio.
+
+| Propiedad | Controles del proyecto | Evaluación |
+|---|---|---|
+| Confidencialidad | RBAC; TOTP/PEM cifrados; cookies seguras; TLS previsto | Parcial: SQLite clínico sin cifrado aplicativo integral |
+| Integridad | SHA-256, RSA-PSS, canonicalización, hash chain y verificador | Implementada en alcance local |
+| Disponibilidad | rate limiting, transacciones acotadas, restauración de demo | Parcial: sin HA, DR ni rate limiting distribuido |
+| Autenticidad | Argon2id+TOTP, JWT RS256, firma RSA-PSS | Implementada en identidad y autoría del prototipo |
+| Accountability/trazabilidad | usuario, acción, entidad, IP, tiempo y cadena hash | Implementada localmente |
+| No repudio | firma individual + llave pública histórica + auditoría | Parcial/demostrativo: sin TSA/HSM/tercero confiable |
+
+La fiabilidad se trata como consideración operativa ligada a disponibilidad y resiliencia; el prototipo no declara una garantía independiente.
+
+# ITU-T X.800
+
+X.800 se usa como taxonomía conceptual y distingue **cinco familias básicas de servicios de seguridad**:
 
 | Servicio X.800 | Implementación | Estado |
 |---|---|---|
-| Authentication | Argon2id + TOTP + JWT RS256 | Implementado |
-| Access control | RBAC + revalidación | Implementado |
-| Data confidentiality | cookies seguras, TOTP/PEM cifrados, HTTPS esperado | Parcial |
-| Data integrity | SHA-256, RSA-PSS, hash chain | Implementado en alcance de demo |
+| Authentication | Argon2id + TOTP + sesión JWT; firmas para origen de datos | Implementado en el alcance del prototipo |
+| Access control | RBAC + revalidación de cuenta/rol | Implementado |
+| Data confidentiality | cookies seguras, TOTP/PEM cifrados, TLS previsto | Parcial |
+| Data integrity | SHA-256, RSA-PSS, hash chain | Implementado en alcance local |
 | Non-repudiation | firma del médico + auditoría | Parcial/demostrativo |
-| Audit/event detection | bitácora, login/denegación, verificador | Implementado localmente |
-| Recovery | semilla/restauración/pruebas | Demo, no DR productivo |
+
+X.800 también contempla mecanismos específicos —como cifrado, firma digital, control de acceso, integridad, intercambio de autenticación y notarización— y mecanismos pervasivos, entre ellos detección de eventos, *security audit trail* y *security recovery*. Por ello, la bitácora, el verificador y la restauración se documentan como **mecanismos/capacidades**, no como familias adicionales de servicio X.800.
 
 # Defense in Depth
 
-1. **Repositorio/SDLC:** `.gitignore`, placeholders, CI con secretos efímeros y pruebas.
-2. **Host/archivos:** material criptográfico fuera de estáticos y PEM cifrados.
-3. **Transporte/navegador:** HTTPS/HSTS, Secure/HttpOnly/SameSite, CSP.
-4. **Identidad:** Argon2id, TOTP, rate limiting, preauth.
-5. **Sesión/autorización:** JWT firmado, expiración, issuer/audience, RBAC, cuenta activa.
-6. **Aplicación:** CSRF, validación, autoescape, SQL parametrizado.
-7. **Datos/criptografía:** SHA-256, RSA-PSS, AES-GCM, PEM cifrados.
-8. **Auditoría/detección:** hash chain, IP, triggers, verificador, exportación.
-9. **Validación/recuperación:** pytest, CI, demo aislada y restauración.
+NIST define Defense in Depth como una estrategia que integra personas, tecnología y capacidades operativas para establecer barreras en múltiples capas.
+
+| Capa/dimensión | Controles clave | Brecha |
+|---|---|---|
+| Gobierno/personas | roles y mínimo privilegio documentados | capacitación, segregación formal y gobierno pendientes |
+| Repositorio/SDLC | `.gitignore`, placeholders, CI, pruebas | controles empresariales de supply chain limitados |
+| Host/archivos | PEM fuera de estáticos, privados cifrados | sin EDR/KMS/HSM |
+| Transporte/navegador | HTTPS/HSTS previsto, Secure/HttpOnly/SameSite, CSP | TLS gestionado/WAF fuera de la demo |
+| Identidad/sesión | Argon2id, TOTP, rate limiting, JWT, revalidación | sin IdP central ni factor resistente a phishing |
+| Aplicación | RBAC, CSRF, validación, autoescape, SQL parametrizado | política centralizada limitada |
+| Datos/criptografía | SHA-256, RSA-PSS, AES-GCM | sin cifrado integral de BD/volumen |
+| Auditoría/validación | hash chain, IP, triggers, verificador, pytest | sin SIEM remoto/inmutable |
+| Operaciones/resiliencia | restauración reproducible de demo | sin IR, HA/DR, backups inmutables ni monitoreo empresarial |
 
 # Implementación de controles
 
@@ -186,7 +210,7 @@ Los POST utilizan double-submit CSRF. Cookies de sesión/preauth son HttpOnly, S
 
 ## Configuración y repositorio
 
-`.env.example` sólo contiene placeholders. `.gitignore` excluye `.env`, bases, PEM, llaves, QR y caches. CI genera secretos efímeros. README documenta instalación, pruebas y limitaciones.
+`.env.example` sólo contiene placeholders. `.gitignore` excluye `.env`, bases, PEM, llaves, QR y caches. CI genera secretos efímeros.
 
 # Pruebas y validación
 
@@ -199,14 +223,14 @@ python -m compileall -q app db tests
 python -m pytest -q
 ```
 
-Resultado observado en el entorno de construcción:
+Evidencia versionada:
 
 ```text
-12 passed
+Compilación: sin errores
+Suite: 12 passed
 ```
 
-
-Pruebas manuales recomendadas: confirmar MFA, denegaciones RBAC, creación/firma de nota, detección de alteración, rechazo de DELETE de auditoría, revocación de usuario y cabeceras HTTP.
+La evidencia se conserva en `evidencias/resultado-validacion.txt`. Las pruebas destructivas recrean previamente la semilla y están destinadas al entorno de demostración.
 
 # Resultados
 
@@ -220,32 +244,39 @@ Pruebas manuales recomendadas: confirmar MFA, denegaciones RBAC, creación/firma
 | Auditoría | Implementado localmente | SHA-256, IP, concurrencia, triggers |
 | CSRF | Implementado | formularios POST y logout |
 | Cabeceras HTTP | Implementado | middleware + pruebas |
+| CIA+ | Parcial según propiedad | confidencialidad/disponibilidad mantienen brechas productivas |
+| X.800 | Mapeado a cinco familias básicas | mecanismos y servicios separados |
 | CI / pruebas | Implementado | workflow sin secretos estáticos, 12 pruebas |
 | Cifrado integral BD clínica | Pendiente productivo | recomendación |
 | Log remoto/WORM | Pendiente productivo | recomendación |
 | KMS/HSM | Pendiente productivo | recomendación |
 
-El riesgo residual principal es el compromiso total del host; también permanecen riesgos de disponibilidad/escalabilidad por SQLite/rate limiter en memoria y confidencialidad de datos clínicos en reposo.
-
-El repositorio final incluye código comentado, README, `.env.example`, modelo de amenazas, documentación, pruebas y evidencias. Bases SQLite, PEM, QR y `.env` reales se excluyen del control de versiones.
+El riesgo residual principal es el compromiso total del host. También permanecen riesgos de disponibilidad/escalabilidad por SQLite/rate limiter en memoria y de confidencialidad de datos clínicos en reposo.
 
 # Conclusiones
 
-Sistema Seguro: Hospital v1.1.0 evoluciona de una demostración de principios criptográficos a un prototipo con un modelo de seguridad más coherente. La mejora principal consiste en cerrar brechas entre controles: MFA ya no conserva secretos en claro; JWT no mantiene acceso de cuentas deshabilitadas; la IP queda protegida por la cadena; el modo demo se separa del perfil seguro; y las pruebas cubren explícitamente controles críticos.
+Sistema Seguro: Hospital v1.1.0 demuestra que la seguridad requiere controles complementarios y evidencia verificable, no un único algoritmo. STRIDE estructura amenazas por categoría; MITRE ATT&CK relaciona escenarios con comportamientos adversarios; CIA+ hace visibles objetivos y brechas de confidencialidad/disponibilidad; X.800 separa servicios de mecanismos; y Defense in Depth evidencia que una solución productiva debe cubrir personas, tecnología y operaciones.
 
-STRIDE mostró amenazas de identidad, integridad, evidencia, confidencialidad, disponibilidad y privilegios. MITRE ATT&CK relacionó escenarios con técnicas adversarias; X.800 distinguió servicios de seguridad; Defense in Depth confirmó distribución de controles desde repositorio/navegador hasta criptografía, persistencia y auditoría.
-
-El prototipo cumple su propósito académico, pero para producción serían imprescindibles alta disponibilidad, TLS administrado, cifrado de almacenamiento/BD, KMS/HSM, logs remotos inmutables, backups, monitoreo continuo, gestión centralizada de identidad y evaluación normativa formal.
+El prototipo cumple su propósito académico, pero para producción serían imprescindibles alta disponibilidad, TLS administrado, cifrado de almacenamiento/BD, KMS/HSM, logs remotos inmutables, backups, monitoreo continuo, gestión centralizada de identidad, respuesta a incidentes, capacitación y evaluación normativa formal.
 
 # Referencias
 
-1. International Telecommunication Union. (1991). *Recommendation X.800: Security architecture for Open Systems Interconnection for CCITT applications*. ITU-T.
-2. National Institute of Standards and Technology. (2025). *Digital Identity Guidelines: Authentication and Authenticator Management (NIST SP 800-63B-4)*.
-3. National Institute of Standards and Technology. (2015). *Secure Hash Standard (FIPS PUB 180-4)*.
-4. M'Raihi, D., Machani, S., Pei, M., & Rydell, J. (2011). *TOTP: Time-Based One-Time Password Algorithm (RFC 6238)*.
-5. Jones, M., Bradley, J., & Sakimura, N. (2015). *JSON Web Token (JWT) (RFC 7519)*.
-6. Moriarty, K., Kaliski, B., Jonsson, J., & Rusch, A. (2016). *PKCS #1: RSA Cryptography Specifications Version 2.2 (RFC 8017)*.
-7. MITRE. (2026). *MITRE ATT&CK Enterprise Matrix and techniques T1078, T1110, T1552.004, T1565.001, T1070, T1190 and T1005*.
-8. OWASP Foundation. (2025). *OWASP Application Security Verification Standard 5.0.0*.
-9. OWASP Foundation. *Cross-Site Request Forgery Prevention Cheat Sheet*.
-10. OWASP Foundation. *HTTP Headers Cheat Sheet*.
+1. International Telecommunication Union. (1991). *Recommendation X.800: Security architecture for Open Systems Interconnection for CCITT applications*. https://www.itu.int/rec/T-REC-X.800-199103-I/en
+2. National Institute of Standards and Technology. (2025). *Digital Identity Guidelines: Authentication and Authenticator Management (NIST SP 800-63B-4)*. https://doi.org/10.6028/NIST.SP.800-63b-4
+3. National Institute of Standards and Technology. (2015). *Secure Hash Standard (FIPS PUB 180-4)*. https://doi.org/10.6028/NIST.FIPS.180-4
+4. M'Raihi, D., Machani, S., Pei, M., & Rydell, J. (2011). *TOTP: Time-Based One-Time Password Algorithm (RFC 6238)*. https://doi.org/10.17487/RFC6238
+5. Jones, M., Bradley, J., & Sakimura, N. (2015). *JSON Web Token (JWT) (RFC 7519)*. https://doi.org/10.17487/RFC7519
+6. Moriarty, K., Kaliski, B., Jonsson, J., & Rusch, A. (2016). *PKCS #1: RSA Cryptography Specifications Version 2.2 (RFC 8017)*. https://doi.org/10.17487/RFC8017
+7. MITRE. *MITRE ATT&CK Enterprise*. https://attack.mitre.org/
+8. OWASP Foundation. (2025). *OWASP Application Security Verification Standard 5.0.0*. https://owasp.org/www-project-application-security-verification-standard/
+9. Microsoft Learn. *Design secure applications on Azure: threat modeling and STRIDE*. https://learn.microsoft.com/en-us/azure/security/develop/secure-design
+10. NIST CSRC. *Security*. https://csrc.nist.gov/glossary/term/security
+11. NIST CSRC. *Defense in Depth*. https://csrc.nist.gov/glossary/term/defense_in_depth
+
+# Artefactos relacionados
+
+- `docs/modelo-amenazas.md`
+- `docs/marcos-seguridad.md`
+- `docs/seguridad.md`
+- `docs/matriz-cumplimiento.md`
+- `evidencias/resultado-validacion.txt`
